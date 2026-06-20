@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Feeder</title>
+  <meta name="control-api-base-url" content="">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
@@ -298,7 +299,7 @@ window.addEventListener("DOMContentLoaded", () => {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, onSnapshot,
+  getFirestore, doc, onSnapshot,
   collection, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -331,27 +332,88 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const CONTROL_API_BASE_KEY = "petfeeder-control-api-base-url";
 
 
+
+
+function getControlApiBaseUrl() {
+  const fromWindow = typeof window.CONTROL_API_BASE_URL === "string"
+    ? window.CONTROL_API_BASE_URL.trim()
+    : "";
+  const fromMeta = document.querySelector('meta[name="control-api-base-url"]')?.content?.trim() || "";
+  const fromQuery = new URLSearchParams(window.location.search).get("api")?.trim() || "";
+  const fromStorage = localStorage.getItem(CONTROL_API_BASE_KEY)?.trim() || "";
+
+
+  return fromWindow || fromMeta || fromQuery || fromStorage;
+}
+
+
+
+
+function resolveControlUrl(path) {
+  const baseUrl = getControlApiBaseUrl();
+  if (!baseUrl) return path;
+  return new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+}
+
+
+
+
+function setControlApiBaseUrl(url) {
+  const value = (url || "").trim();
+  if (value) {
+    localStorage.setItem(CONTROL_API_BASE_KEY, value);
+  } else {
+    localStorage.removeItem(CONTROL_API_BASE_KEY);
+  }
+}
+
+
+
+
+window.setControlApiBaseUrl = setControlApiBaseUrl;
+
+
+
+
+async function postControl(path, mode, buttonSetter) {
+  buttonSetter(mode);
+
+
+  try {
+    const res = await fetch(resolveControlUrl(path), { method: "POST", mode: "cors" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch (error) {
+    console.error(`Failed to send control command for ${path}:`, error);
+  }
+}
 
 
 function setStepper(mode) {
-  setStepperButtons(mode);
+  const normalized = mode.toLowerCase();
+  const routes = {
+    open: "/stepper/open",
+    close: "/stepper/close",
+    auto: "/stepper/auto"
+  };
 
 
-  setDoc(doc(db, "control", "stepper"), {
-    value: mode.toUpperCase()
-  });
+  postControl(routes[normalized], normalized, setStepperButtons);
 }
 
 
 function setVibration(mode) {
-  setVibButtons(mode);
+  const normalized = mode.toLowerCase();
+  const routes = {
+    on: "/vibration/on",
+    off: "/vibration/off",
+    auto: "/vibration/auto"
+  };
 
 
-  setDoc(doc(db, "control", "vibration"), {
-    value: mode.toUpperCase()
-  });
+  postControl(routes[normalized], normalized, setVibButtons);
 }
 
 
