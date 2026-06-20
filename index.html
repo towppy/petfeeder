@@ -59,14 +59,6 @@
       <div class="card-label">Vibration</div>
       <div class="card-value" id="vibration">--</div>
     </div>
-    <div class="card" id="card-feeds">
-      <div class="card-label">Today's Feeds</div>
-      <div class="card-value" id="feed-count">0</div>
-    </div>
-    <div class="card" id="card-last">
-      <div class="card-label">Last Feed</div>
-      <div class="card-value" id="last-feed" style="font-size:13px">--</div>
-    </div>
   </div>
 
 
@@ -80,12 +72,6 @@
       <div class="panel-title">Distance Over Time</div>
       <canvas id="distance-chart" height="100"></canvas>
     </div>
-  </div>
-
-
-  <div class="chart-panel full-width">
-    <div class="panel-title">Feeds by Hour (Today)</div>
-    <canvas id="hourly-chart" height="80"></canvas>
   </div>
 
 
@@ -282,15 +268,49 @@ window.addEventListener("DOMContentLoaded", () => {
 
   window.weightChart = new Chart(wCtx.getContext("2d"), {
     type: "line",
-    data: { labels: [], datasets: [{ data: [] }] },
-    options: { animation: false }
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Weight (g)",
+        data: [],
+        borderColor: "#ff6b6b",
+        backgroundColor: "rgba(255, 107, 107, 0.1)",
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
   });
 
 
   window.distChart = new Chart(dCtx.getContext("2d"), {
     type: "line",
-    data: { labels: [], datasets: [{ data: [] }] },
-    options: { animation: false }
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Distance (cm)",
+        data: [],
+        borderColor: "#4ecdc4",
+        backgroundColor: "rgba(78, 205, 196, 0.1)",
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
   });
 });
 </script>
