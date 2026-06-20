@@ -251,6 +251,48 @@
 </script>
 
 
+<script>
+window.weightChart = null;
+window.distChart = null;
+
+
+function pushToChart(chart, label, value, max = 40) {
+  if (!chart) return; // prevents crash
+
+
+  chart.data.labels.push(label);
+  chart.data.datasets[0].data.push(value);
+
+
+  if (chart.data.labels.length > max) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+  }
+
+
+  chart.update();
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const wCtx = document.getElementById("weight-chart");
+  const dCtx = document.getElementById("distance-chart");
+
+
+  window.weightChart = new Chart(wCtx.getContext("2d"), {
+    type: "line",
+    data: { labels: [], datasets: [{ data: [] }] },
+    options: { animation: false }
+  });
+
+
+  window.distChart = new Chart(dCtx.getContext("2d"), {
+    type: "line",
+    data: { labels: [], datasets: [{ data: [] }] },
+    options: { animation: false }
+  });
+});
+</script>
 
 
 <script type="module">
@@ -352,11 +394,17 @@ onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
 
 
 
-  if (dist >= 0) pushToChart(distChart, now, dist);
-  if (!isNaN(weight)) pushToChart(weightChart, now, weight);
+ if (window.distChart) {
+  pushToChart(window.distChart, now, dist);
+}
+
+
+if (window.weightChart) {
+  pushToChart(window.weightChart, now, weight);
+}
+
+
 });
-
-
 
 
 /* HISTORY */
