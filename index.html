@@ -4,15 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Feeder</title>
-
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
-
-
 <body>
+
+
 
 
 <div class="alert-banner" id="alert-banner">
@@ -23,6 +21,8 @@
 
 
 <div class="layout">
+
+
   <header>
     <div class="header-left">
       <div class="header-icon">⚙</div>
@@ -32,20 +32,114 @@
       </div>
     </div>
     <div class="header-right">
-      <button class="theme-toggle" onclick="toggleTheme()">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
         <span id="theme-icon">☾</span>
       </button>
-      <div class="pulse-dot" id="conn-dot"></div>
+      <div class="pulse-dot" id="conn-dot" title="Live"></div>
     </div>
   </header>
 
 
-  <!-- UI unchanged (cards, charts, table, controls) -->
-  <!-- KEEP YOUR HTML EXACTLY AS-IS HERE -->
+ 
+  <div class="cards">
+    <div class="card" id="card-distance">
+      <div class="card-label">Distance</div>
+      <div class="card-value" id="distance">--<span class="unit">cm</span></div>
+    </div>
+    <div class="card" id="card-weight">
+      <div class="card-label">Weight</div>
+      <div class="card-value" id="weight-val">--<span class="unit">g</span></div>
+    </div>
+    <div class="card" id="card-status">
+      <div class="card-label">Status</div>
+      <div class="card-value status-val" id="status">--</div>
+    </div>
+    <div class="card" id="card-vibration">
+      <div class="card-label">Vibration</div>
+      <div class="card-value" id="vibration">--</div>
+    </div>
+    <div class="card" id="card-feeds">
+      <div class="card-label">Today's Feeds</div>
+      <div class="card-value" id="feed-count">0</div>
+    </div>
+    <div class="card" id="card-last">
+      <div class="card-label">Last Feed</div>
+      <div class="card-value" id="last-feed" style="font-size:13px">--</div>
+    </div>
+  </div>
+
+
+ 
+  <div class="charts-row">
+    <div class="chart-panel">
+      <div class="panel-title">Weight Over Time</div>
+      <canvas id="weight-chart" height="100"></canvas>
+    </div>
+    <div class="chart-panel">
+      <div class="panel-title">Distance Over Time</div>
+      <canvas id="distance-chart" height="100"></canvas>
+    </div>
+  </div>
+
+
+  <div class="chart-panel full-width">
+    <div class="panel-title">Feeds by Hour (Today)</div>
+    <canvas id="hourly-chart" height="80"></canvas>
+  </div>
+
+
+  <!-- CONTROLS -->
+  <div class="controls-grid">
+    <div class="control-panel">
+      <div class="panel-title">Stepper Motor</div>
+      <div class="btn-row">
+        <button class="btn" id="s-open"  onclick="setStepper('open')">OPEN</button>
+        <button class="btn" id="s-close" onclick="setStepper('close')">CLOSE</button>
+        <button class="btn" id="s-auto"  onclick="setStepper('auto')">AUTO</button>
+      </div>
+    </div>
+    <div class="control-panel">
+      <div class="panel-title">Vibration Motor</div>
+      <div class="btn-row">
+        <button class="btn" id="v-on"   onclick="setVibration('on')">ON</button>
+        <button class="btn" id="v-off"  onclick="setVibration('off')">OFF</button>
+        <button class="btn" id="v-auto" onclick="setVibration('auto')">AUTO</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- HISTORY TABLE -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <span>Feed History</span>
+      <div class="table-actions">
+        <span id="history-count">0 entries</span>
+        <button class="btn-clear" onclick="clearHistory()">CLEAR</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Distance</th>
+            <th>Weight</th>
+            <th>Vibration</th>
+          </tr>
+        </thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </div>
+
+
 </div>
-
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+
 
 
 <script>
@@ -58,7 +152,11 @@
   }
 
 
+
+
   let alertDismissed = false;
+
+
 
 
   function showAlert(msg) {
@@ -68,9 +166,13 @@
   }
 
 
+
+
   function hideAlert() {
     document.getElementById('alert-banner').classList.remove('show');
   }
+
+
 
 
   function dismissAlert() {
@@ -79,9 +181,13 @@
   }
 
 
+
+
   function badge(text, type) {
     return `<span class="badge badge-${type}">${text}</span>`;
   }
+
+
 
 
   function statusBadge(s) {
@@ -93,9 +199,13 @@
   }
 
 
+
+
   function methodBadge(m) {
     return badge(m, m === 'MANUAL' ? 'manual' : 'auto');
   }
+
+
 
 
   function setStepperButtons(mode) {
@@ -106,6 +216,8 @@
   }
 
 
+
+
   function setVibButtons(mode) {
     ['on','off','auto'].forEach(m => {
       document.getElementById(`v-${m}`).className =
@@ -114,14 +226,20 @@
   }
 
 
+
+
   function updateCardStyle(id, cls) {
     document.getElementById(id).className = 'card ' + (cls || '');
   }
 
 
+
+
   function pushToChart(chart, label, value, max = 40) {
     chart.data.labels.push(label);
     chart.data.datasets[0].data.push(value);
+
+
 
 
     if (chart.data.labels.length > max) {
@@ -133,6 +251,8 @@
 </script>
 
 
+
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -141,9 +261,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
+
+
 import {
   getDatabase, ref, set
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
 
 
 /* Firebase */
@@ -157,9 +281,13 @@ const firebaseConfig = {
 };
 
 
+
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const rtdb = getDatabase(app);
+
+
 
 
 /* ✅ CONTROL (FIXED) */
@@ -169,19 +297,27 @@ function setStepper(mode) {
 }
 
 
+
+
 function setVibration(mode) {
   setVibButtons(mode);
   set(ref(rtdb, "control/vibration"), mode.toUpperCase());
 }
 
 
+
+
 window.setStepper = setStepper;
 window.setVibration = setVibration;
+
+
 
 
 /* FIRESTORE SENSOR */
 onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
   if (!snap.exists()) return;
+
+
 
 
   const d = snap.data();
@@ -190,25 +326,37 @@ onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
   const now = new Date().toLocaleTimeString();
 
 
+
+
   document.getElementById('distance').innerHTML =
     (dist < 0 ? '--' : dist.toFixed(1)) + '<span class="unit">cm</span>';
+
+
 
 
   document.getElementById('weight-val').innerHTML =
     (isNaN(weight) ? '--' : weight.toFixed(1)) + '<span class="unit">g</span>';
 
 
+
+
   document.getElementById('status').textContent = d.status || '--';
   document.getElementById('vibration').textContent = d.vibration || '--';
+
+
 
 
   updateCardStyle('card-distance', dist > 0 && dist < 15 ? 'active' : '');
   updateCardStyle('card-weight', weight >= 15 ? 'alert' : '');
 
 
+
+
   if (dist >= 0) pushToChart(distChart, now, dist);
   if (!isNaN(weight)) pushToChart(weightChart, now, weight);
 });
+
+
 
 
 /* HISTORY */
@@ -219,12 +367,18 @@ const historyQuery = query(
 );
 
 
+
+
 onSnapshot(historyQuery, (snap) => {
   const data = snap.docs.map(d => d.data());
 
 
+
+
   document.getElementById('history-count').textContent =
     `${data.length} entries`;
+
+
 
 
   document.getElementById('history').innerHTML =
@@ -242,8 +396,16 @@ onSnapshot(historyQuery, (snap) => {
 </script>
 
 
+
+
 </body>
 </html>
+
+
+
+
+
+
 
 
 
