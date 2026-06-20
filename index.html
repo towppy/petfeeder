@@ -11,13 +11,17 @@
 <body>
 
 
+
+
 <div class="alert-banner" id="alert-banner">
   <span>⚠</span>
   <span id="alert-text">Weight detected — feeder locked closed</span>
   <button onclick="dismissAlert()">✕</button>
 </div>
 
+
 <div class="layout">
+
 
   <header>
     <div class="header-left">
@@ -35,7 +39,8 @@
     </div>
   </header>
 
-  
+
+ 
   <div class="cards">
     <div class="card" id="card-distance">
       <div class="card-label">Distance</div>
@@ -63,7 +68,8 @@
     </div>
   </div>
 
-  
+
+ 
   <div class="charts-row">
     <div class="chart-panel">
       <div class="panel-title">Weight Over Time</div>
@@ -75,10 +81,12 @@
     </div>
   </div>
 
+
   <div class="chart-panel full-width">
     <div class="panel-title">Feeds by Hour (Today)</div>
     <canvas id="hourly-chart" height="80"></canvas>
   </div>
+
 
   <!-- CONTROLS -->
   <div class="controls-grid">
@@ -99,6 +107,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- HISTORY TABLE -->
   <div class="table-wrap">
@@ -126,7 +135,9 @@
     </div>
   </div>
 
+
 </div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
@@ -139,16 +150,15 @@
     updateChartTheme();
   }
 
+
   // ---- State ----
-  let lastHistoryLen = 0;
   let weightHistory  = [];
   let distHistory    = [];
   let lastWeight     = 0;
   let alertDismissed = false;
-  let lastPushedWeight = null;
-  let lastPushedDist   = null;
 
-  
+
+ 
   function showAlert(msg) {
     if (alertDismissed) return;
     document.getElementById('alert-text').textContent = msg;
@@ -161,6 +171,7 @@
     alertDismissed = true;
     hideAlert();
   }
+
 
  
   function badge(text, type) {
@@ -179,6 +190,7 @@
     return badge(m, m === 'MANUAL' ? 'manual' : 'auto');
   }
 
+
   // ---- Button states ----
   function setStepperButtons(mode) {
     ['open','close','auto'].forEach(m => {
@@ -193,7 +205,8 @@
   function updateCardStyle(cardId, cls) {
     document.getElementById(cardId).className = 'card ' + (cls || '');
   }
-//HERE LAST
+
+
   // ---- API ----
   async function setStepper(mode) {
     setStepperButtons(mode);
@@ -206,10 +219,9 @@
   async function clearHistory() {
     if (!confirm('Clear all feed history?')) return;
     await fetch('/history/clear', { method: 'POST' });
-    lastHistoryLen = 0;
-    loadHistory();
     updateHourlyChart([]);
   }
+
 
   // ---- Charts setup ----
   function chartDefaults() {
@@ -220,9 +232,11 @@
     };
   }
 
+
   const weightCtx  = document.getElementById('weight-chart').getContext('2d');
   const distCtx    = document.getElementById('distance-chart').getContext('2d');
   const hourlyCtx  = document.getElementById('hourly-chart').getContext('2d');
+
 
   function makeLineChart(ctx, label, color) {
     return new Chart(ctx, {
@@ -255,8 +269,10 @@
     });
   }
 
+
   const weightChart = makeLineChart(weightCtx, 'Weight (g)', '#f5a623');
   const distChart   = makeLineChart(distCtx,   'Distance (cm)', '#4da6ff');
+
 
   const hourlyChart = new Chart(hourlyCtx, {
     type: 'bar',
@@ -288,6 +304,7 @@
     }
   });
 
+
   function updateChartTheme() {
     const { gridColor, textColor } = chartDefaults();
     [weightChart, distChart, hourlyChart].forEach(c => {
@@ -299,6 +316,7 @@
     });
   }
 
+
   function pushToChart(chart, label, value, maxPoints = 40) {
     chart.data.labels.push(label);
     chart.data.datasets[0].data.push(value);
@@ -308,6 +326,7 @@
     }
     chart.update();
   }
+
 
   function updateHourlyChart(history) {
     const today = new Date().toISOString().slice(0,10);
@@ -322,106 +341,128 @@
     hourlyChart.update();
   }
 
- 
-  async function updateData() {
-    try {
-      const res = await fetch('/data');
-      if (!res.ok) throw new Error();
-      const d = await res.json();
-
-      const dist   = parseFloat(d.distance);
-      const weight = parseFloat(d.weight);
-      const now    = new Date().toLocaleTimeString();
-
-      document.getElementById('distance').innerHTML =
-        (dist < 0 ? '--' : dist.toFixed(1)) + '<span class="unit">cm</span>';
-      document.getElementById('weight-val').innerHTML =
-        (isNaN(weight) || weight < 0 ? '--' : weight.toFixed(1)) + '<span class="unit">g</span>';
-      document.getElementById('status').textContent    = d.status    || '--';
-      document.getElementById('vibration').textContent = d.vibration || '--';
-
-      
-      const s = (d.status || '').toUpperCase();
-      updateCardStyle('card-status',    s === 'OPEN' ? 'active' : s === 'CLOSED' ? 'warn' : '');
-      updateCardStyle('card-vibration', d.vibration === 'ON' ? 'active' : '');
-      updateCardStyle('card-distance',  dist > 0 && dist <= 15 ? 'active' : '');
-      updateCardStyle('card-weight',    weight >= 15 ? 'alert' : '');
-
-      
-      if (weight >= 15) {
-        alertDismissed = false;
-        showAlert(`⚠ Weight detected, feeder locked closed`);
-      } else {
-        hideAlert();
-        alertDismissed = false;
-      }
-
-      
-if (dist >= 0 && dist !== lastPushedDist) {
-  pushToChart(distChart, now, dist);
-  lastPushedDist = dist;
-}
-if (!isNaN(weight) && weight !== lastPushedWeight) {
-  pushToChart(weightChart, now, weight);
-  lastPushedWeight = weight;
-}
-
-      document.getElementById('conn-dot').style.background = 'var(--green)';
-    } catch {
-      document.getElementById('conn-dot').style.background = 'var(--red)';
-    }
-  }
-
-  async function loadHistory() {
-    try {
-      const res  = await fetch('/history');
-      const data = await res.json();
-
-      if (data.length === lastHistoryLen) return;
-      lastHistoryLen = data.length;
-
-      const today = new Date().toISOString().slice(0,10);
-      const todayFeeds = data.filter(r => r.time && r.time.startsWith(today) && r.status === 'OPEN');
-      document.getElementById('feed-count').textContent = todayFeeds.length;
-
-      
-      if (data.length > 0) {
-        document.getElementById('last-feed').textContent = data[0].time.split(' ')[1] || '--';
-      }
-
-      document.getElementById('history-count').textContent =
-        `${data.length} entr${data.length === 1 ? 'y' : 'ies'}`;
-
-      updateHourlyChart(data);
-
-  
-
-      const tbody = document.getElementById('history');
-      if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">NO ENTRIES YET</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = data.map(row => `
-        <tr>
-          <td>${row.time}</td>
-          <td>${methodBadge(row.method)}</td>
-          <td>${statusBadge(row.status)}</td>
-          <td>${row.distance === '-' ? '—' : parseFloat(row.distance).toFixed(1) + ' cm'}</td>
-          <td>${row.weight   === '-' ? '—' : parseFloat(row.weight).toFixed(1)   + ' g'}</td>
-          <td>${row.vibration}</td>
-        </tr>
-      `).join('');
-    } catch { }
-  }
 
   // ---- Init ----
   setStepperButtons('auto');
   setVibButtons('auto');
-  updateData();
-  loadHistory();
-  setInterval(updateData,  2500);
-  setInterval(loadHistory, 10000);
+  // live numbers now come from the firebase listeners below, no polling needed
+</script>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, doc, onSnapshot,
+    collection, query, orderBy, limit
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+ const firebaseConfig = {
+  apiKey: "AIzaSyBmxZwbP7G0JBw016J4EJvcEVoGhBF2COg",
+  authDomain: "petfeeder-661f6.firebaseapp.com",
+  projectId: "petfeeder-661f6",
+  storageBucket: "petfeeder-661f6.firebasestorage.app",
+  messagingSenderId: "841780628794",
+  appId: "1:841780628794:web:cd8e963a1b1c82ec109403"
+};
+
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db    = getFirestore(fbApp);
+
+
+  // live sensor card, alerts, charts -- replaces the old fetch('/data') poll
+  onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+
+    const dist   = parseFloat(d.distance);
+    const weight = parseFloat(d.weight);
+    const now    = new Date().toLocaleTimeString();
+
+
+    document.getElementById('distance').innerHTML =
+      (dist < 0 ? '--' : dist.toFixed(1)) + '<span class="unit">cm</span>';
+    document.getElementById('weight-val').innerHTML =
+      (isNaN(weight) || weight < 0 ? '--' : weight.toFixed(1)) + '<span class="unit">g</span>';
+    document.getElementById('status').textContent    = d.status    || '--';
+    document.getElementById('vibration').textContent = d.vibration || '--';
+
+
+    const s = (d.status || '').toUpperCase();
+    updateCardStyle('card-status',    s === 'OPEN' ? 'active' : s === 'CLOSED' ? 'warn' : '');
+    updateCardStyle('card-vibration', d.vibration === 'ON' ? 'active' : '');
+    updateCardStyle('card-distance',  dist > 0 && dist <= 15 ? 'active' : '');
+    updateCardStyle('card-weight',    weight >= 15 ? 'alert' : '');
+
+
+    if (weight >= 15) {
+      alertDismissed = false;
+      showAlert('⚠ Weight detected, feeder locked closed');
+    } else {
+      hideAlert();
+      alertDismissed = false;
+    }
+
+
+    if (dist >= 0) pushToChart(distChart, now, dist);
+    if (!isNaN(weight)) pushToChart(weightChart, now, weight);
+
+
+    document.getElementById('conn-dot').style.background = 'var(--green)';
+  }, () => {
+    document.getElementById('conn-dot').style.background = 'var(--red)';
+  });
+
+
+  // live history table + counters -- replaces the old fetch('/history') poll
+  let lastHistoryLen = 0;
+  const historyQuery = query(collection(db, "feed_history"), orderBy("timestamp", "desc"), limit(100));
+  onSnapshot(historyQuery, (snap) => {
+    const data = snap.docs.map(d => d.data());
+
+
+    const today = new Date().toISOString().slice(0,10);
+    const todayFeeds = data.filter(r => r.time && r.time.startsWith(today) && r.status === 'OPEN');
+    document.getElementById('feed-count').textContent = todayFeeds.length;
+
+
+    if (data.length > 0) {
+      document.getElementById('last-feed').textContent = data[0].time.split(' ')[1] || '--';
+    }
+
+
+    document.getElementById('history-count').textContent =
+      `${data.length} entr${data.length === 1 ? 'y' : 'ies'}`;
+
+
+    updateHourlyChart(data);
+
+
+    if (data.length === lastHistoryLen) return;
+    lastHistoryLen = data.length;
+
+
+    const tbody = document.getElementById('history');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">NO ENTRIES YET</td></tr>`;
+      return;
+    }
+
+
+    tbody.innerHTML = data.map(row => `
+      <tr>
+        <td>${row.time}</td>
+        <td>${methodBadge(row.method)}</td>
+        <td>${statusBadge(row.status)}</td>
+        <td>${row.distance === '-' ? '—' : parseFloat(row.distance).toFixed(1) + ' cm'}</td>
+        <td>${row.weight   === '-' ? '—' : parseFloat(row.weight).toFixed(1)   + ' g'}</td>
+        <td>${row.vibration}</td>
+      </tr>
+    `).join('');
+  });
 </script>
 </body>
 </html>
+
