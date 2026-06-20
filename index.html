@@ -268,49 +268,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   window.weightChart = new Chart(wCtx.getContext("2d"), {
     type: "line",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Weight (g)",
-        data: [],
-        borderColor: "#ff6b6b",
-        backgroundColor: "rgba(255, 107, 107, 0.1)",
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      animation: false,
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+    data: { labels: [], datasets: [{ label: "Weight", data: [] }] },
+    options: { animation: false }
   });
 
 
   window.distChart = new Chart(dCtx.getContext("2d"), {
     type: "line",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Distance (cm)",
-        data: [],
-        borderColor: "#4ecdc4",
-        backgroundColor: "rgba(78, 205, 196, 0.1)",
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      animation: false,
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+    data: { labels: [], datasets: [{ label: "Distance", data: [] }] },
+    options: { animation: false }
   });
 });
 </script>
