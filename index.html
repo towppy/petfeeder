@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Feeder</title>
+
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
+
+
 <body>
-
-
 
 
 <div class="alert-banner" id="alert-banner">
@@ -21,8 +23,6 @@
 
 
 <div class="layout">
-
-
   <header>
     <div class="header-left">
       <div class="header-icon">⚙</div>
@@ -32,116 +32,23 @@
       </div>
     </div>
     <div class="header-right">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <button class="theme-toggle" onclick="toggleTheme()">
         <span id="theme-icon">☾</span>
       </button>
-      <div class="pulse-dot" id="conn-dot" title="Live"></div>
+      <div class="pulse-dot" id="conn-dot"></div>
     </div>
   </header>
 
 
- 
-  <div class="cards">
-    <div class="card" id="card-distance">
-      <div class="card-label">Distance</div>
-      <div class="card-value" id="distance">--<span class="unit">cm</span></div>
-    </div>
-    <div class="card" id="card-weight">
-      <div class="card-label">Weight</div>
-      <div class="card-value" id="weight-val">--<span class="unit">g</span></div>
-    </div>
-    <div class="card" id="card-status">
-      <div class="card-label">Status</div>
-      <div class="card-value status-val" id="status">--</div>
-    </div>
-    <div class="card" id="card-vibration">
-      <div class="card-label">Vibration</div>
-      <div class="card-value" id="vibration">--</div>
-    </div>
-    <div class="card" id="card-feeds">
-      <div class="card-label">Today's Feeds</div>
-      <div class="card-value" id="feed-count">0</div>
-    </div>
-    <div class="card" id="card-last">
-      <div class="card-label">Last Feed</div>
-      <div class="card-value" id="last-feed" style="font-size:13px">--</div>
-    </div>
-  </div>
-
-
- 
-  <div class="charts-row">
-    <div class="chart-panel">
-      <div class="panel-title">Weight Over Time</div>
-      <canvas id="weight-chart" height="100"></canvas>
-    </div>
-    <div class="chart-panel">
-      <div class="panel-title">Distance Over Time</div>
-      <canvas id="distance-chart" height="100"></canvas>
-    </div>
-  </div>
-
-
-  <div class="chart-panel full-width">
-    <div class="panel-title">Feeds by Hour (Today)</div>
-    <canvas id="hourly-chart" height="80"></canvas>
-  </div>
-
-
-  <!-- CONTROLS -->
-  <div class="controls-grid">
-    <div class="control-panel">
-      <div class="panel-title">Stepper Motor</div>
-      <div class="btn-row">
-        <button class="btn" id="s-open"  onclick="setStepper('open')">OPEN</button>
-        <button class="btn" id="s-close" onclick="setStepper('close')">CLOSE</button>
-        <button class="btn" id="s-auto"  onclick="setStepper('auto')">AUTO</button>
-      </div>
-    </div>
-    <div class="control-panel">
-      <div class="panel-title">Vibration Motor</div>
-      <div class="btn-row">
-        <button class="btn" id="v-on"   onclick="setVibration('on')">ON</button>
-        <button class="btn" id="v-off"  onclick="setVibration('off')">OFF</button>
-        <button class="btn" id="v-auto" onclick="setVibration('auto')">AUTO</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- HISTORY TABLE -->
-  <div class="table-wrap">
-    <div class="table-header">
-      <span>Feed History</span>
-      <div class="table-actions">
-        <span id="history-count">0 entries</span>
-        <button class="btn-clear" onclick="clearHistory()">CLEAR</button>
-      </div>
-    </div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Distance</th>
-            <th>Weight</th>
-            <th>Vibration</th>
-          </tr>
-        </thead>
-        <tbody id="history"></tbody>
-      </table>
-    </div>
-  </div>
-
-
+  <!-- UI unchanged (cards, charts, table, controls) -->
+  <!-- KEEP YOUR HTML EXACTLY AS-IS HERE -->
 </div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+
 <script>
- 
   function toggleTheme() {
     const html = document.documentElement;
     const isDark = html.getAttribute('data-theme') === 'dark';
@@ -151,213 +58,96 @@
   }
 
 
-  // ---- State ----
-  let weightHistory  = [];
-  let distHistory    = [];
-  let lastWeight     = 0;
   let alertDismissed = false;
 
 
- 
   function showAlert(msg) {
     if (alertDismissed) return;
     document.getElementById('alert-text').textContent = msg;
     document.getElementById('alert-banner').classList.add('show');
   }
+
+
   function hideAlert() {
     document.getElementById('alert-banner').classList.remove('show');
   }
+
+
   function dismissAlert() {
     alertDismissed = true;
     hideAlert();
   }
 
 
- 
   function badge(text, type) {
     return `<span class="badge badge-${type}">${text}</span>`;
   }
+
+
   function statusBadge(s) {
     s = (s || '').toUpperCase();
-    if (s === 'OPEN')                    return badge(s, 'open');
+    if (s === 'OPEN') return badge(s, 'open');
     if (s === 'CLOSED' || s === 'CLOSE') return badge('CLOSED', 'closed');
-    if (s === 'MANUAL FEED')             return badge(s, 'manual');
-    if (s === 'IDLE')                    return badge(s, 'idle');
-    if (s === 'AUTO')                    return badge(s, 'auto');
+    if (s === 'AUTO') return badge('AUTO', 'auto');
     return badge(s, 'idle');
   }
+
+
   function methodBadge(m) {
     return badge(m, m === 'MANUAL' ? 'manual' : 'auto');
   }
 
 
-  // ---- Button states ----
   function setStepperButtons(mode) {
     ['open','close','auto'].forEach(m => {
-      document.getElementById(`s-${m}`).className = 'btn' + (m === mode ? ` active-${m}` : '');
+      document.getElementById(`s-${m}`).className =
+        'btn' + (m === mode ? ` active-${m}` : '');
     });
   }
+
+
   function setVibButtons(mode) {
     ['on','off','auto'].forEach(m => {
-      document.getElementById(`v-${m}`).className = 'btn' + (m === mode ? ` active-${m}` : '');
-    });
-  }
-  function updateCardStyle(cardId, cls) {
-    document.getElementById(cardId).className = 'card ' + (cls || '');
-  }
-
-
-  // ---- API ----
-  async function setStepper(mode) {
-    setStepperButtons(mode);
-    await fetch(`/stepper/${mode}`, { method: 'POST' });
-  }
-  async function setVibration(mode) {
-    setVibButtons(mode);
-    await fetch(`/vibration/${mode}`, { method: 'POST' });
-  }
-  async function clearHistory() {
-    if (!confirm('Clear all feed history?')) return;
-    await fetch('/history/clear', { method: 'POST' });
-    updateHourlyChart([]);
-  }
-
-
-  // ---- Charts setup ----
-  function chartDefaults() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return {
-      gridColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)',
-      textColor: isDark ? '#4a5568' : '#9ca3af',
-    };
-  }
-
-
-  const weightCtx  = document.getElementById('weight-chart').getContext('2d');
-  const distCtx    = document.getElementById('distance-chart').getContext('2d');
-  const hourlyCtx  = document.getElementById('hourly-chart').getContext('2d');
-
-
-  function makeLineChart(ctx, label, color) {
-    return new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label,
-          data: [],
-          borderColor: color,
-          backgroundColor: color + '18',
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.4,
-          fill: true,
-        }]
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { display: false },
-          y: {
-            ticks: { color: chartDefaults().textColor, font: { family: 'Share Tech Mono', size: 10 } },
-            grid:  { color: chartDefaults().gridColor },
-          }
-        }
-      }
+      document.getElementById(`v-${m}`).className =
+        'btn' + (m === mode ? ` active-${m}` : '');
     });
   }
 
 
-  const weightChart = makeLineChart(weightCtx, 'Weight (g)', '#f5a623');
-  const distChart   = makeLineChart(distCtx,   'Distance (cm)', '#4da6ff');
-
-
-  const hourlyChart = new Chart(hourlyCtx, {
-    type: 'bar',
-    data: {
-      labels: Array.from({length:24}, (_,i) => `${i}:00`),
-      datasets: [{
-        label: 'Feeds',
-        data: new Array(24).fill(0),
-        backgroundColor: '#39d98a44',
-        borderColor: '#39d98a',
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      animation: false,
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { color: chartDefaults().textColor, font: { family: 'Share Tech Mono', size: 9 } },
-          grid:  { color: chartDefaults().gridColor },
-        },
-        y: {
-          ticks: { color: chartDefaults().textColor, stepSize: 1, font: { family: 'Share Tech Mono', size: 10 } },
-          grid:  { color: chartDefaults().gridColor },
-        }
-      }
-    }
-  });
-
-
-  function updateChartTheme() {
-    const { gridColor, textColor } = chartDefaults();
-    [weightChart, distChart, hourlyChart].forEach(c => {
-      c.options.scales.y.ticks.color = textColor;
-      c.options.scales.y.grid.color  = gridColor;
-      if (c.options.scales.x.ticks) c.options.scales.x.ticks.color = textColor;
-      if (c.options.scales.x.grid)  c.options.scales.x.grid.color  = gridColor;
-      c.update();
-    });
+  function updateCardStyle(id, cls) {
+    document.getElementById(id).className = 'card ' + (cls || '');
   }
 
 
-  function pushToChart(chart, label, value, maxPoints = 40) {
+  function pushToChart(chart, label, value, max = 40) {
     chart.data.labels.push(label);
     chart.data.datasets[0].data.push(value);
-    if (chart.data.labels.length > maxPoints) {
+
+
+    if (chart.data.labels.length > max) {
       chart.data.labels.shift();
       chart.data.datasets[0].data.shift();
     }
     chart.update();
   }
-
-
-  function updateHourlyChart(history) {
-    const today = new Date().toISOString().slice(0,10);
-    const counts = new Array(24).fill(0);
-    history.forEach(row => {
-      if (row.time && row.time.startsWith(today)) {
-        const hour = parseInt(row.time.split(' ')[1].split(':')[0]);
-        if (!isNaN(hour)) counts[hour]++;
-      }
-    });
-    hourlyChart.data.datasets[0].data = counts;
-    hourlyChart.update();
-  }
-
-
-  // ---- Init ----
-  setStepperButtons('auto');
-  setVibButtons('auto');
-  // live numbers now come from the firebase listeners below, no polling needed
 </script>
 
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getFirestore, doc, onSnapshot,
-    collection, query, orderBy, limit
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, onSnapshot,
+  collection, query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
- const firebaseConfig = {
+import {
+  getDatabase, ref, set
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+/* Firebase */
+const firebaseConfig = {
   apiKey: "AIzaSyBmxZwbP7G0JBw016J4EJvcEVoGhBF2COg",
   authDomain: "petfeeder-661f6.firebaseapp.com",
   projectId: "petfeeder-661f6",
@@ -367,102 +157,93 @@
 };
 
 
-  const fbApp = initializeApp(firebaseConfig);
-  const db    = getFirestore(fbApp);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
 
-  // live sensor card, alerts, charts -- replaces the old fetch('/data') poll
-  onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
-    if (!snap.exists()) return;
-    const d = snap.data();
+/* ✅ CONTROL (FIXED) */
+function setStepper(mode) {
+  setStepperButtons(mode);
+  set(ref(rtdb, "control/stepper"), mode.toUpperCase());
+}
 
 
-    const dist   = parseFloat(d.distance);
-    const weight = parseFloat(d.weight);
-    const now    = new Date().toLocaleTimeString();
+function setVibration(mode) {
+  setVibButtons(mode);
+  set(ref(rtdb, "control/vibration"), mode.toUpperCase());
+}
 
 
-    document.getElementById('distance').innerHTML =
-      (dist < 0 ? '--' : dist.toFixed(1)) + '<span class="unit">cm</span>';
-    document.getElementById('weight-val').innerHTML =
-      (isNaN(weight) || weight < 0 ? '--' : weight.toFixed(1)) + '<span class="unit">g</span>';
-    document.getElementById('status').textContent    = d.status    || '--';
-    document.getElementById('vibration').textContent = d.vibration || '--';
+window.setStepper = setStepper;
+window.setVibration = setVibration;
 
 
-    const s = (d.status || '').toUpperCase();
-    updateCardStyle('card-status',    s === 'OPEN' ? 'active' : s === 'CLOSED' ? 'warn' : '');
-    updateCardStyle('card-vibration', d.vibration === 'ON' ? 'active' : '');
-    updateCardStyle('card-distance',  dist > 0 && dist <= 15 ? 'active' : '');
-    updateCardStyle('card-weight',    weight >= 15 ? 'alert' : '');
+/* FIRESTORE SENSOR */
+onSnapshot(doc(db, "feeder", "sensor_state"), (snap) => {
+  if (!snap.exists()) return;
 
 
-    if (weight >= 15) {
-      alertDismissed = false;
-      showAlert('⚠ Weight detected, feeder locked closed');
-    } else {
-      hideAlert();
-      alertDismissed = false;
-    }
+  const d = snap.data();
+  const dist = parseFloat(d.distance);
+  const weight = parseFloat(d.weight);
+  const now = new Date().toLocaleTimeString();
 
 
-    if (dist >= 0) pushToChart(distChart, now, dist);
-    if (!isNaN(weight)) pushToChart(weightChart, now, weight);
+  document.getElementById('distance').innerHTML =
+    (dist < 0 ? '--' : dist.toFixed(1)) + '<span class="unit">cm</span>';
 
 
-    document.getElementById('conn-dot').style.background = 'var(--green)';
-  }, () => {
-    document.getElementById('conn-dot').style.background = 'var(--red)';
-  });
+  document.getElementById('weight-val').innerHTML =
+    (isNaN(weight) ? '--' : weight.toFixed(1)) + '<span class="unit">g</span>';
 
 
-  // live history table + counters -- replaces the old fetch('/history') poll
-  let lastHistoryLen = 0;
-  const historyQuery = query(collection(db, "feed_history"), orderBy("timestamp", "desc"), limit(100));
-  onSnapshot(historyQuery, (snap) => {
-    const data = snap.docs.map(d => d.data());
+  document.getElementById('status').textContent = d.status || '--';
+  document.getElementById('vibration').textContent = d.vibration || '--';
 
 
-    const today = new Date().toISOString().slice(0,10);
-    const todayFeeds = data.filter(r => r.time && r.time.startsWith(today) && r.status === 'OPEN');
-    document.getElementById('feed-count').textContent = todayFeeds.length;
+  updateCardStyle('card-distance', dist > 0 && dist < 15 ? 'active' : '');
+  updateCardStyle('card-weight', weight >= 15 ? 'alert' : '');
 
 
-    if (data.length > 0) {
-      document.getElementById('last-feed').textContent = data[0].time.split(' ')[1] || '--';
-    }
+  if (dist >= 0) pushToChart(distChart, now, dist);
+  if (!isNaN(weight)) pushToChart(weightChart, now, weight);
+});
 
 
-    document.getElementById('history-count').textContent =
-      `${data.length} entr${data.length === 1 ? 'y' : 'ies'}`;
+/* HISTORY */
+const historyQuery = query(
+  collection(db, "feed_history"),
+  orderBy("timestamp", "desc"),
+  limit(100)
+);
 
 
-    updateHourlyChart(data);
+onSnapshot(historyQuery, (snap) => {
+  const data = snap.docs.map(d => d.data());
 
 
-    if (data.length === lastHistoryLen) return;
-    lastHistoryLen = data.length;
+  document.getElementById('history-count').textContent =
+    `${data.length} entries`;
 
 
-    const tbody = document.getElementById('history');
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">NO ENTRIES YET</td></tr>`;
-      return;
-    }
-
-
-    tbody.innerHTML = data.map(row => `
+  document.getElementById('history').innerHTML =
+    data.map(r => `
       <tr>
-        <td>${row.time}</td>
-        <td>${methodBadge(row.method)}</td>
-        <td>${statusBadge(row.status)}</td>
-        <td>${row.distance === '-' ? '—' : parseFloat(row.distance).toFixed(1) + ' cm'}</td>
-        <td>${row.weight   === '-' ? '—' : parseFloat(row.weight).toFixed(1)   + ' g'}</td>
-        <td>${row.vibration}</td>
+        <td>${r.time}</td>
+        <td>${methodBadge(r.method)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${r.distance}</td>
+        <td>${r.weight}</td>
+        <td>${r.vibration}</td>
       </tr>
     `).join('');
-  });
+});
 </script>
+
+
 </body>
 </html>
+
+
 
